@@ -40,7 +40,7 @@ function render(){
 function viewDash(){
   const act=CARDS.filter(c=>c.status==="active").length,dead=CARDS.length-act;
   let s='<div class="page"><div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap"><div><h2 style="font-size:19px">Your Cards</h2><div class="sub">Single-use cards that close after one charge — no more surprise subscription fees.</div></div><button class="btn spacer" onclick="go(\'new\')">+ New Card</button></div>';
-  s+='<div class="tiles"><div class="tile slate"><div class="l">Total Cards</div><div class="v">'+CARDS.length+'</div></div><div class="tile green"><div class="l">Active</div><div class="v">'+act+'</div></div><div class="tile red"><div class="l">Auto-Closed</div><div class="v">'+dead+'</div></div></div></div>';
+  s+='<div class="tiles"><div class="tile slate"><div class="l">Total Cards</div><div class="v">'+CARDS.length+'</div></div><div class="tile green"><div class="l">Active</div><div class="v">'+act+'</div></div><div class="tile red"><div class="l">Auto-Closed</div><div class="v">'+dead+'</div></div></div>';
   if(ERR)s+='<div class="msg err">'+esc(ERR)+'</div>';
   if(!CARDS.length){s+='<div class="empty">Create your first single-use card to protect against unwanted subscription charges during free trials.</div>'}
   CARDS.forEach(c=>{
@@ -90,7 +90,6 @@ async function charge(id){
     await load();
   }catch(e){alert("Charge call failed: "+e.message)}
 }
-let DRAFT={num:null};
 function feePreview(){
   const a=parseFloat(document.getElementById("nc_amt").value);
   const plan=curPlan(),f=isNaN(a)||a<=0?null:feeFor(a,plan);
