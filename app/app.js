@@ -17,7 +17,7 @@ function curPlan(){return localStorage.getItem("ta_plan")||"casual"}
 function setPlan(p){localStorage.setItem("ta_plan",p);localStorage.setItem("ta_plan_at",new Date().toISOString());render()}
 function cardPlan(id,fallback){return localStorage.getItem("ta_plan_"+id)||fallback||"casual"}
 let VIEW="dash",CARDS=[],CHARGES=[],ERR="",LAST=null;
-function esc(s){return String(s).replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 async function load(){
   try{CARDS=await rest("GET","/rest/v1/cards?select=*&order=created_at.desc");CHARGES=await rest("GET","/rest/v1/charges?select=*&order=created_at.desc");ERR="";}
   catch(e){ERR="Could not reach the card store: "+e.message}
@@ -132,7 +132,7 @@ function viewPlans(){
     {id:"pro",n:"Pro",p:"$9.99",u:"/month",feats:["No per-card fee up to $500","Half the tiered fee above $500","Unlimited single-use cards"]}];
   let s='<div class="page"><h2 style="font-size:19px">Plans</h2><div class="sub">Pick how you pay the Trial Armor fee. Your plan applies to every card you create.</div><div class="plans">';
   tiles.forEach(t=>{
-    s+='<div class="plan'+(cur===t.id?" cur":"")+'">'+(cur===t.id?'<div class="tag">CURRENT</div>':'')+"<h3>"+t.n+'</h3><div class="price">'+t.p+'<span>'+t.u+'</span></div><ul>'+t.feats.map(f=>"<li>"+f+"</li>").join("")+'</ul><button class="btn'+(cur===t.id?" ghost":"")+'" style="width:100%" '+(cur===t.id?"disabled":"")+' onclick="setPlan(\''+t.id+'\')">'+(cur===t.id?"Current plan":"Switch to "+t.n)+'</button></div>';
+    s+='<div class="plan'+(cur===t.id?" cur":"")+'">'+(cur===t.id?'<div class="tag">CURRENT</div>':"")+'<h3>'+t.n+'</h3><div class="price">'+t.p+'<span>'+t.u+'</span></div><ul>'+t.feats.map(f=>"<li>"+f+"</li>").join("")+'</ul><button class="btn'+(cur===t.id?" ghost":"")+'" style="width:100%" '+(cur===t.id?"disabled":"")+' onclick="setPlan(\''+t.id+'\')">'+(cur===t.id?"Current plan":"Switch to "+t.n)+'</button></div>';
   });
   s+='</div><div class="tiers"><b style="font-size:14px">Per-card fee by trial size</b><table>';
   [[0,25,1],[26,50,2],[51,100,3],[101,250,5],[251,500,8],[501,1000,12],[1001,null,15]].forEach(r=>{
