@@ -34,3 +34,17 @@ GitHub Pages deploys `main` automatically (Deploy from a branch, root). The `CNA
 3. Plans are browser-local (localStorage), not tied to an account.
 4. The old Bolt prototype (trial-armor-subscrip-llo7.bolt.host) is still publicly reachable and predates the pricing build; the site no longer points at it, but it is discoverable.
 5. GitHub Pages "Enforce HTTPS" is still off in the repo's Pages settings.
+
+
+## Accounts and security (Nov 8, branch work)
+- RLS migration in `migrations/2026-11-08_security.sql`: per-user ownership on cards
+  and charges, demo rows read-only for anonymous visitors, stored PANs truncated to
+  last-4 and CVVs wiped, insert-only waitlist table.
+- `app/` is now account-aware: email+password sign in, private cards per user, demo
+  data readable but not chargeable or deletable. Card numbers are stored last-4 only.
+- `app/issuing.js`: provider-agnostic issuing adapter (sandbox mode), HMAC webhook
+  verification, idempotency keys, single-use lifecycle. No real issuer contacted.
+- `tests/test.js`: 15 unit tests (pricing, formatting, sandbox lifecycle, webhook
+  signatures). Run with Node.
+- Deployment order and public-role verification: see `docs/deploy-security.md`.
+- Canadian issuing landscape and program model: `docs/issuing-providers-canada.md`.

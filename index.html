@@ -59,7 +59,7 @@ footer a{color:var(--dim)}
 <div class="logo">Trial<span>Armor</span></div>
 <div style="display:flex;gap:10px">
 <a class="btn small ghost" href="/app/">Open the app</a>
-<a class="btn small" href="mailto:hello@trialarmor.de?subject=Waitlist">Join the waitlist</a>
+<a class="btn small" href="#waitlist">Join the waitlist</a>
 </div>
 </nav></div></header>
 
@@ -108,10 +108,15 @@ footer a{color:var(--dim)}
 <p class="src">The full tier table is in the app: <a href="/app/">open the app</a> and open the Plans tab.</p>
 </div></section>
 
-<section class="final"><div class="wrap" style="text-align:center">
+<section class="final" id="waitlist"><div class="wrap" style="text-align:center">
 <h2>Be first in line</h2>
 <p class="lede" style="margin:0 auto 24px">Trial Armor is in the works right now. Join the waitlist and you'll hear the moment cards go live.</p>
-<a class="btn" href="mailto:hello@trialarmor.de?subject=Waitlist">Join the waitlist</a>
+<form id="wl_form" style="margin:0 auto;max-width:440px;display:flex;gap:10px" action="javascript:void(0)">
+<input id="wl_email" type="email" required placeholder="you@example.com" aria-label="Your email address" style="flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px 14px;font-size:1rem">
+<button class="btn" type="submit">Join the waitlist</button>
+</form>
+<p id="wl_msg" class="lede" style="margin:12px auto 0;font-size:.95rem" role="status"></p>
+<p class="src" style="margin-top:8px">We only email you about launch. No sharing, no marketing.</p>
 </div></section>
 
 <footer><div class="wrap">
@@ -119,5 +124,24 @@ Trial Armor is a product of Bad Esse Inc., Guelph, Ontario, Canada. Say hi at <a
 &copy; 2026 Bad Esse Inc. All rights reserved.<br>
 <a href="/terms.html">Terms of Service</a> &middot; <a href="/privacy.html">Privacy Policy</a> &middot; <a href="/contact.html">Contact</a>
 </div></footer>
+<script>
+(function(){
+  var SB="https://ojxhqbtozjxurzztqxpb.supabase.co";
+  var KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qeGhxYnRvemp4dXJ6enRxeHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODU1NTAsImV4cCI6MjEwNzU2MTU1MH0.PV-pHhxknw5Vy_J2UuXkY8PS4dNHVLiaPL3a8PSfZd4";
+  var f=document.getElementById("wl_form");
+  if(!f)return;
+  f.addEventListener("submit",function(e){
+    e.preventDefault();
+    var email=document.getElementById("wl_email").value.trim();
+    var msg=document.getElementById("wl_msg");
+    if(!email||email.indexOf("@")<1){msg.textContent="Enter a valid email address.";msg.style.color="#fca5a5";return}
+    msg.textContent="Adding you…";msg.style.color="var(--dim)";
+    fetch(SB+"/rest/v1/waitlist",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json","Prefer":"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify([{email:email}])}).then(function(r){
+      if(r.status===201||r.status===200){msg.textContent="You're on the list. We'll email you when cards go live.";msg.style.color="#86efac";f.style.display="none";}
+      else{throw 0}
+    }).catch(function(){msg.innerHTML='Could not save that right now. Email <a href="mailto:hello@trialarmor.de?subject=Waitlist">hello@trialarmor.de</a> and we will add you by hand.';msg.style.color="#fca5a5";});
+  });
+})();
+</script>
 </body>
 </html>
