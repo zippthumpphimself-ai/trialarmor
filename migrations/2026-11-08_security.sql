@@ -15,7 +15,9 @@ alter table public.cards   add column if not exists card_last4 text;
 alter table public.charges add column if not exists owner uuid references auth.users(id) on delete cascade;
 alter table public.charges add column if not exists idempotency_key text;
 
--- 2. Scrub stored card data on existing rows: keep only the last 4 digits
+-- 2. Scrub stored card data on existing rows: keep only the last 4 digits.
+-- card_cvv is NOT NULL in the current schema, so relax it before the wipe.
+alter table public.cards alter column card_cvv drop not null;
 update public.cards
    set card_last4 = right(regexp_replace(coalesce(card_number, ''), '[^0-9]', '', 'g'), 4)
  where card_last4 is null;

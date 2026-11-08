@@ -60,12 +60,31 @@ async function rest(method,path,body){
   if(!r.ok){let m=t;try{m=JSON.parse(t).message||t}catch(e){}throw new Error(m.slice(0,200));}
   return t?JSON.parse(t):null;
 }
-// Insert with ownership. If the schema migration has not run yet (no `owner`
-// column), fall back to the old shape so the app keeps working during rollout.
+// Insert with ownership and schema fallback. Depending on whether the security
+// migration has run, the table may accept: owner column + nullable cvv (new),
+// or neither (old). Try new shape first, then fall back. A placeholder CVV is
+// used only against the OLD schema, which requires the column: the value is a
+// fixed synthetic "0000" for a simulated card, never a real code, and the
+// migration nulls it out on the first run.
 async function insertRow(table,row){
   const s=session();
   if(!s)return rest("POST","/rest/v1/"+table,row);
-  try{return await rest("POST","/rest/v1/"+table,Object.assign({owner:s.user.id},row))}
+  const withOwner=Object.assign({owner:s.user.id},row);
+  if(!("card_cvv" in row)){
+    const withCvv=Object.assign({card_cvv:"0000"},row);
+    const withCvvOwner=Object.assign({owner:s.user.id,card_cvv:"0000"},row);
+    try{return await rest("POST","/rest/v1/"+table,withOwner)}
+    catch(e1){
+      if(!/owner|PGRST204|42703/i.test(String(e1.message)))throw e1;
+      try{return await rest("POST","/rest/v1/"+table,row)}
+      catch(e2){
+        if(!/card_cvv|23502/i.test(String(e2.message)))throw e2;
+        try{return await rest("POST","/rest/v1/"+table,withCvvOwner)}
+        catch(e3){if(/owner|PGRST204|42703/i.test(String(e3.message)))return rest("POST","/rest/v1/"+table,withCvv);throw e3}
+      }
+    }
+  }
+  try{return await rest("POST","/rest/v1/"+table,withOwner)}
   catch(e){if(/owner|PGRST204|42703/i.test(String(e.message)))return rest("POST","/rest/v1/"+table,row);throw e}
 }
 async function load(){
@@ -187,7 +206,7 @@ async function createCard(){
   if(!(a>0)){alert("Enter the trial charge amount.");return}
   const g=genCard(),plan=curPlan(),fee=feeFor(a,plan);
   try{
-    const cards=await insertRow("cards",{merchant_name:m,card_number:g.num.replace(/ /g,"").slice(-4),card_expiry_month:g.mm,card_expiry_year:g.yy,card_cvv:null,status:"active"});
+    const cards=await insertRow("cards",{merchant_name:m,card_number:g.num.replace(/ /g,"").slice(-4),card_expiry_month:g.mm,card_expiry_year:g.yy,status:"active"});
     const c=cards[0];
     localStorage.setItem("ta_plan_"+c.id,plan);
     await insertRow("charges",{card_id:c.id,amount:fee,status:"succeeded",decline_reason:"Trial Armor fee — card $"+a.toFixed(2)+", plan "+PLANS[plan].name});
