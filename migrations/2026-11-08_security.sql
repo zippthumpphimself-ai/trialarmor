@@ -4,7 +4,8 @@
 -- account-aware app from branch improvements-nov7.
 -- What it does: adds per-user ownership, scrubs stored PANs/CVVs to last4 only,
 -- marks existing rows as demo data, turns on row level security for every table,
--- adds an insert-only waitlist table, and adds the indexes the policies need.
+-- adds an insert-only waitlist table, tightens grants to least privilege, and
+-- adds the indexes the policies need.
 
 begin;
 
@@ -85,5 +86,14 @@ create index if not exists charges_card_idx on public.charges(card_id);
 create index if not exists charges_owner_idx on public.charges(owner);
 create unique index if not exists charges_idem_idx on public.charges(idempotency_key)
   where idempotency_key is not null;
+
+-- 7. Least-privilege grants: anonymous visitors keep read-only access on
+-- cards/charges (RLS filters them to demo rows) and lose every write path.
+-- Demo card creation stays possible only through the edge function path until
+-- the account-aware app is deployed.
+revoke all on public.cards   from anon;
+grant select on public.cards to anon;
+revoke all on public.charges from anon;
+grant select on public.charges to anon;
 
 commit;

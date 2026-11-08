@@ -2,8 +2,10 @@
 // Deploy: Supabase Studio > Edge Functions > charge-card > paste over the code > Deploy.
 // Behavior matches the current mock: first successful charge closes the card.
 // Changes vs the live version:
-//   1. Verifies the caller is a signed-in user (never trusts the anon key).
-//   2. Rejects charges on cards the caller does not own (demo cards are not chargeable).
+//   1. Anonymous callers may ONLY charge demo cards (the pre-launch demo store);
+//      real user cards require a signed-in owner. This keeps the live demo's
+//      test-charge button working while closing the hole on real cards.
+//   2. Rejects charges on cards the caller does not own.
 //   3. Honors an idempotency key (x-ta-idempotency-key header) so a retried tap
 //      cannot double-charge.
 // No real issuer is contacted; nothing here moves real money.
@@ -34,13 +36,12 @@ Deno.serve(async (req) => {
     const url = Deno.env.get("SUPABASE_URL");
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
-    // 1. Who is calling? The anon key must never be accepted as a charge authority.
+    // 1. Who is calling? (Anonymous callers are only ever allowed on demo cards.)
     const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY"), {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    const user = userData?.user;
-    if (userErr || !user) return json({ error: "Sign in to run charges." }, 401);
+    const { data: userData } = await userClient.auth.getUser();
+    const user = userData?.user || null;
 
     // 2. Idempotency: same key returns the original result, no second charge.
     if (idemKey) {
@@ -53,15 +54,18 @@ Deno.serve(async (req) => {
     const { data: card } = await admin
       .from("cards").select("id,owner,status,is_demo").eq("id", cardId).maybeSingle();
     if (!card) return json({ error: "Card not found" }, 404);
-    if (card.is_demo || card.owner !== user.id)
-      return json({ error: "You do not own this card." }, 403);
+    if (!card.is_demo) {
+      if (!user) return json({ error: "Sign in to run charges." }, 401);
+      if (card.owner !== user.id)
+        return json({ error: "You do not own this card." }, 403);
+    }
     if (card.status !== "active")
       return json({ status: "declined", reason: "Card is closed — single-use card already spent" }, 200);
 
     // 4. Sandbox charge + auto-close (the whole point of a single-use card)
     const { data: charge, error } = await admin
       .from("charges")
-      .insert({ card_id: cardId, amount, status: "succeeded", owner: user.id, idempotency_key: idemKey })
+      .insert({ card_id: cardId, amount, status: "succeeded", owner: user ? user.id : null, idempotency_key: idemKey })
       .select()
       .single();
     if (error) return json({ error: error.message }, 500);
