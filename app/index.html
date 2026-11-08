@@ -4,23 +4,29 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Trial Armor — Single-Use Card Protection</title>
+<meta name="description" content="Create single-use cards that close after their first charge, so a free trial never turns into a surprise renewal. Demo mode: cards are simulated, no real charges."/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E"/>
+<meta name="theme-color" content="#070b14"/>
 <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 <header><div class="wrap">
   <div class="hrow">
-    <div class="logo"><div class="shield">TA</div><div class="brand"><b>Trial Armor</b><span>Single-Use Card Protection</span></div></div>
+    <a class="logo" href="/" style="color:inherit;text-decoration:none"><div class="shield">TA</div><div class="brand"><b>Trial Armor</b><span>Single-Use Card Protection</span></div></a>
     <div class="mock"><span class="dot"></span>Mock Mode</div>
   </div>
   <nav>
     <button id="tab-dash" class="on" onclick="go('dash')">Dashboard</button>
     <button id="tab-new" onclick="go('new')">New Card</button>
     <button id="tab-plans" onclick="go('plans')">Plans</button>
+    <button id="tab-account" onclick="go('account')">Account</button>
   </nav>
 </div></header>
 <div class="wrap"><div id="view"></div>
-<footer>Mock prototype — no real charges. Single-use cards close automatically after their first successful charge.</footer>
+<footer>Mock prototype — no real charges. Single-use cards close automatically after their first successful charge.<br><a href="/">trialarmor.de</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/contact.html">Contact</a></footer>
 </div>
+<script src="core.js"></script>
+<script src="issuing.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
